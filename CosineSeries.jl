@@ -3,6 +3,7 @@
 module CosineSeries
 
 using PyPlot
+using FFTW
 export cosAmplitudes, cosSeries, plotCurve
 
 # Formulas for the forward and backward DCT:
@@ -26,7 +27,7 @@ end
 function cosSeries(x)
 	N = length(x)
 	amps = cosAmplitudes(x)
-	f(t) = sum([amps[k+1] * cos.(π*k/N * (t+1/2)) for k=0:N-1])
+	f(t) = sum([amps[k+1] * cos.(π*k/N * (t.+1/2)) for k=0:N-1])
 	return f
 end
 
@@ -34,7 +35,7 @@ end
 function plotCurve(x, y, resolution)
 	N = length(x)
 	N != length(y) && throw(ArgumentError("x and y must be the same size"))
-	t = linspace(0, N - 1, resolution)
+	t = range(0, stop=N-1, length=resolution)
 	x_curve = cosSeries(x)
 	y_curve = cosSeries(y)
 	PyPlot.plot(x_curve(t), y_curve(t), "b")

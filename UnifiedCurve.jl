@@ -1,4 +1,4 @@
-# used to make a single (discontinuous) curve that goes through a list of disconnected segments 
+# used to make a single (discontinuous) curve that goes through a list of disconnected segments
 
 using PyPlot
 using CosineSeries
@@ -17,7 +17,7 @@ open("paths_split") do f
 	for i = 1:div(length(lines), 2)
 		x = [parse(Float64, s) for s in split(lines[2*i-1],   ", ")]
 		y = [parse(Float64, s) for s in split(lines[2*i], ", ")]
-		y = 1000 - y
+		y = 1000 .- y
 		push!(datapoints, [x y])
 	end
 end
@@ -41,15 +41,15 @@ end
 
 # We can express b(x) as 1/2 (sign x + sign (1 - x)) and therefore we can
 # just halve the coefficients and multiply the cosine series by (sign x + sign(1-x))
-# Although we don't have to bother scaling the coefficients anyway, because we can just scale the entire 
+# Although we don't have to bother scaling the coefficients anyway, because we can just scale the entire
 # drawing by a factor of two (only relative differences are visible)
 
 # If we have to shift the cosine by Δ to a term of cos(kπ/N ((u - Δ) + 1/2)), we get
 # cos(kπ*(N-1)/N ( u - Δ + 1 / (2N + 2)))
 
-# We can thus see the general structure of the equation. 
+# We can thus see the general structure of the equation.
 # Let us first define some data types.
-type CosWave # A cos(2πν(t + δ))
+struct CosWave # A cos(2πν(t + δ))
 	A::Vector{Float64}
 	ν::Float64
 	δ::Float64
@@ -58,18 +58,18 @@ end
 function ω(c::CosWave) return 2π*c.ν end
 
 # Series of cosine waves that approximate a given segment
-type CosSeries
+struct CosSeries
 	x_min::Float64 # The value of x (t) where this function becomes active (left wall of the unit box)
 	terms::Vector{CosWave}
 end
 
-# Series of disconnected 
-type SegmentedSeries
+# Series of disconnected
+struct SegmentedSeries
 	series::Vector{CosSeries}
 end
 
 function string(x::Float64)
-	return string(Float32(trunc(x, 5)))
+	return string(Float32(trunc(5x))/5)
 end
 
 # "+ x" or "- x" depending on the sign of x
@@ -88,7 +88,7 @@ end
 
 # evaluates a single cosine wave in the points t
 function eval(c :: CosWave, t)
-	return c.A * cos.(ω(c)*(t' + c.δ))
+	return c.A * cos.(ω(c)*(t' .+ c.δ))
 end
 
 function string(s :: CosSeries)
@@ -102,7 +102,7 @@ end
 
 # evaluates a cosine series in the points t
 function eval(s :: CosSeries, t)
-	box = (sign.(t' - s.x_min) - sign.(t' - s.x_min - 1))
+	box = (sign.(t' .- s.x_min) - sign.(t' .- s.x_min .- 1))
 	bb  = [box; box]
 	return sum([bb .* eval(wave, t) for wave in s.terms])
 end
@@ -139,8 +139,8 @@ end
 # Print the equation for the drawing
 println(string(segmSeries))
 
-## Plot the equation whe have just found
-# t  = linspace(0, length(segmSeries.series), 5000)
+# # Plot the equation whe have just found
+# t  = range(0, stop=length(segmSeries.series), length=5000)
 # ev = eval(segmSeries, t)
 # x  = ev[1,:]
 # y  = ev[2,:]
